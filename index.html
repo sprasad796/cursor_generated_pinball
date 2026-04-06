@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pinball Shooter (You vs Computer)</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="title">
+        <div class="title__name">Pinball Shooter</div>
+        <div class="title__hint">Aim + power: drag from the launcher, release to shoot.</div>
+      </div>
+      <div class="scoreboard" aria-label="Scoreboard">
+        <div class="score">
+          <div class="score__label">You</div>
+          <div class="score__value" id="playerScore">0</div>
+        </div>
+        <div class="score">
+          <div class="score__label">Computer</div>
+          <div class="score__value" id="cpuScore">0</div>
+        </div>
+        <div class="score score--small">
+          <div class="score__label">Ball</div>
+          <div class="score__value" id="ballCount">1 / 3</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="panel">
+        <canvas id="game" width="900" height="600" aria-label="Game canvas"></canvas>
+        <div class="hud">
+          <div class="hud__status" id="statusText">Your turn. Drag to aim.</div>
+          <div class="hud__controls">
+            <button class="btn" id="restartBtn" type="button">Restart</button>
+            <label class="toggle">
+              <input id="soundToggle" type="checkbox" checked />
+              <span>Sound</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="help">
+        <h2>How to play</h2>
+        <ul>
+          <li><b>Drag</b> from the launcher (bottom center) to set aim and power.</li>
+          <li><b>Release</b> to shoot the ball into the field.</li>
+          <li>Hit bumpers and targets to score. Your ball drains if it falls out the bottom.</li>
+          <li>After your ball drains, the <b>computer takes its shot</b>.</li>
+          <li>After <b>3 balls each</b>, highest total score wins.</li>
+        </ul>
+      </section>
+    </main>
+
+    <script src="./game.js" defer></script>
+  </body>
+</html>
