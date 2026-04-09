@@ -9,6 +9,9 @@
     ballCount: document.getElementById("ballCount"),
     statusText: document.getElementById("statusText"),
     restartBtn: document.getElementById("restartBtn"),
+    padLeftBtn: document.getElementById("padLeftBtn"),
+    padRightBtn: document.getElementById("padRightBtn"),
+    boostBtn: document.getElementById("boostBtn"),
     soundToggle: document.getElementById("soundToggle"),
   };
 
@@ -199,9 +202,9 @@
 
     // Inner obstacles (AABB blocks)
     const obstacles = [
-      { x: W() * 0.30, y: H() * 0.64, w: W() * 0.16, h: 14 },
-      { x: W() * 0.54, y: H() * 0.66, w: W() * 0.16, h: 14 },
-      { x: W() * 0.44, y: H() * 0.24, w: W() * 0.12, h: 12 },
+      { x: W() * 0.35, y: H() * 0.64, w: W() * 0.06, h: 8 },
+      { x: W() * 0.59, y: H() * 0.66, w: W() * 0.06, h: 8 },
+      { x: W() * 0.4825, y: H() * 0.24, w: W() * 0.045, h: 7 },
     ];
 
     // Boost pads: push the ball in a direction on contact.
@@ -264,6 +267,9 @@
     ball: makeBall(),
     phase: "aim", // aim | flying | draining | cpu_aim | match_over
     t: 0,
+    boostsLeft: 2,
+    lastBoostAt: -999,
+    lastPadAt: -999,
     playerTotal: 0,
     cpuTotal: 0,
     playerBall: 1,
@@ -288,6 +294,9 @@
     state.ball = makeBall();
     state.phase = "aim";
     state.t = 0;
+    state.boostsLeft = 2;
+    state.lastBoostAt = -999;
+    state.lastPadAt = -999;
     state.playerTotal = 0;
     state.cpuTotal = 0;
     state.playerBall = 1;
@@ -369,9 +378,49 @@
       }
     } else {
       state.ball = makeBall();
+      state.boostsLeft = 2;
+      state.lastBoostAt = -999;
+      state.lastPadAt = -999;
       resetTargets();
       updateUI();
     }
+  }
+
+  function padNudge(dir) {
+    // Two pads: left/right nudge during flight.
+    if (state.phase !== "flying") return;
+    if (state.activeSide !== "player") return;
+    const cooldown = 0.16;
+    if (state.t - state.lastPadAt < cooldown) return;
+
+    const b = state.ball;
+    const strength = 260; // lateral impulse (px/s)
+    b.vx += dir * strength;
+    b.vy -= 60; // tiny lift feels more "pinball"
+    state.lastPadAt = state.t;
+    state.flash = Math.max(state.flash, 0.10);
+  }
+
+  function boostBall() {
+    // Player-controlled booster during flight.
+    if (state.phase !== "flying") return;
+    if (state.activeSide !== "player") return;
+    if (state.boostsLeft <= 0) return;
+
+    const cooldown = 0.38;
+    if (state.t - state.lastBoostAt < cooldown) return;
+
+    const b = state.ball;
+    const sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+    const ux = sp > 40 ? b.vx / sp : 0;
+    const uy = sp > 40 ? b.vy / sp : -1;
+    const strength = 520;
+
+    b.vx += ux * strength;
+    b.vy += uy * strength;
+    state.boostsLeft -= 1;
+    state.lastBoostAt = state.t;
+    state.flash = Math.max(state.flash, 0.14);
   }
 
   function planCpuShot() {
@@ -449,6 +498,17 @@
   canvas.addEventListener("pointercancel", () => (state.isDragging = false));
 
   ui.restartBtn.addEventListener("click", () => resetForNewMatch());
+  ui.padLeftBtn?.addEventListener("click", () => padNudge(-1));
+  ui.padRightBtn?.addEventListener("click", () => padNudge(1));
+  ui.boostBtn?.addEventListener("click", () => boostBall());
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "KeyA") padNudge(-1);
+    if (e.code === "KeyD") padNudge(1);
+    if (e.code === "Space") {
+      e.preventDefault();
+      boostBall();
+    }
+  });
   ui.soundToggle.addEventListener("change", () => {
     if (!ui.soundToggle.checked) return;
     // Attempt to unlock audio context on user gesture
